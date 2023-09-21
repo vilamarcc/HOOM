@@ -1,10 +1,12 @@
 import math
 import numpy as np
 from utils.ISA import *
+from models.dynamics import lat_dynamics, lon_dynamics
+from utils.scales import *
 
 class plane_model:
 
-    # ------- UAV class --------
+    # ------- Plane class --------
     # Contains geometry, mass, stability derivatives and TFs of a given fixed wing UAV
     # Transforms dimensional quantities to non dimensional and projects
     # stability derivatives on body axes. Calculates TFs from derivatives
@@ -44,30 +46,33 @@ class plane_model:
         self.lat = lat
         self.lon = lon
 
-        """     - Longitudinal channel -
-               Body-axes long. stability derivatives
-             C_Xu, C_Xalpha, C_Xdeltae
-             C_Zu, C_Zalpha, C_Zalphadot, C_Zq, C_Zdeltae
-             C_mdeltae
-             C_mu, C_malpha, C_malphadot, C_mq, C_mTu,
-               Non dimensional time, mass, inertia
-             t_lon, mu_lon, Iyb_nd
-               Transfer functions
-             G
-    
-             - Lateral-directional channel -
-               Body-axes lat.-dir. stability derivatives
-             C_Ybeta, C_Yp, C_Yr, C_Ydeltaa, C_Ydeltar
-             C_lbeta, C_lp, C_lr, C_ldeltaa, C_ldeltar
-             C_nbeta, C_np, C_nr, C_nTb, C_ndeltaa, 
-             C_ndeltar
-               Non dimensional time, mass, inertia
-             t_lat, mu_lat, Ixb_nd, Izb_nd, Ixzb_nd
-               Transfer functions
-             G """
+        #     - Longitudinal channel -
+        #       Body-axes long. stability derivatives
+        #     C_Xu, C_Xalpha, C_Xdeltae
+        #     C_Zu, C_Zalpha, C_Zalphadot, C_Zq, C_Zdeltae
+        #     C_mdeltae
+        #     C_mu, C_malpha, C_malphadot, C_mq, C_mTu,
+        #       Non dimensional time, mass, inertia
+        #     t_lon, mu_lon, Iyb_nd
+        #       Transfer functions
+        #     G
+        #     - Lateral-directional channel -
+        #       Body-axes lat.-dir. stability derivatives
+        #     C_Ybeta, C_Yp, C_Yr, C_Ydeltaa, C_Ydeltar
+        #     C_lbeta, C_lp, C_lr, C_ldeltaa, C_ldeltar
+        #     C_nbeta, C_np, C_nr, C_nTb, C_ndeltaa, 
+        #     C_ndeltar
+        #       Non dimensional time, mass, inertia
+        #     t_lat, mu_lat, Ixb_nd, Izb_nd, Ixzb_nd
+        #       Transfer functions
+        #     G """
 
     def loadplane(self,model = None):
 
+        # -- Load flight condition and derivatives into class --
+        # Includes non dimensional characteristics
+
+        scales = 
         # - Geometric and mass properties -
         self.model_name    = model.name
         self.Sw            = model.Sw
