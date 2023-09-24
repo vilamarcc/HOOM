@@ -1,4 +1,5 @@
 from utils.conversion import *
+import numpy as np
 
  # -- Global Hawk Characteristics & Stability derivatives --
 
@@ -68,3 +69,14 @@ class GlobalHawk:
             'r': -0.018,
             'deltaa': -0.001,
             'deltar': 0.020}
+        
+        FC = {
+                'hs': ft_to_m(10000),
+                'us': kt_to_ms(320),
+                'alphabs': deg_to_rad(0),
+                'CLs': 0.154,
+                'CDs': 0.026,
+                'CTs': 0.026 / np.cos(deg_to_rad(0)),  # Assumed equal to CDs (alpha = 0)
+                'Cms': 0,  # Assumed 0
+                'CmTs': 0,  # Assumed 0
+                'epss': deg_to_rad(0)}
