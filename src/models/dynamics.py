@@ -1,42 +1,48 @@
 import sympy as sp
 import utils.scales as utils
 
-def lon_dynamics(model):
+def lon_dynamics(plane):
     """
-    Generate the transfer functions for longitudinal dynamics.
-
+    Calculates all lognitudinal transfer functions for the given plane.
     Parameters:
-    model (object): The model object containing the longitudinal parameters.
+        - plane (object): A class object containing the parameters of the plane.
 
     Returns:
-    dict: A dictionary containing the transfer functions for the longitudinal dynamics.
+        - G (dict): A dictionary containing the transfer functions for the logitudinal dynamics of the plane. The keys of the dictionary are the names of the transfer functions, and the values are the corresponding transfer function objects.
+        - A (sympy matrix): The state matrix of the logitudinal dynamics.
+        - B (sympy matrix): The control matrix of the logitudinal dynamics.
+    Note:
+    - Assumes control by elevator deflection (deltae) and thrust (deltaT).
+    - The transfer functions are calculated based on the parameters of the plane.
     """
+
     # -- Calculate all longitudinal transfer functions --
     # Assumes control by elevator deflection (deltae) and thrust (deltaT).
 
     # - Symbolic variables -
+
     s = sp.symbols('s')
 
     # - State matrix -
     A = sp.zeros(3)
-    A[0, 0] = 2 * model.lon['mu_lon'] * model.lon['t_lon'] * s - model.lon['CX']['u']
-    A[0, 1] = -model.lon['CX']['alpha']
-    A[0, 2] = -model.FC['CZs']
-    A[1, 0] = -(model.lon['CZ']['u'] + 2 * model.FC['CZs'])
-    A[1, 1] = (2 * model.lon['mu_lon'] - model.lon['CZ']['alphadot']) * model.lon['t_lon'] * s - model.lon['CZ']['alpha']
-    A[1, 2] = -(2 * model.lon['mu_lon'] + model.lon['CZ']['q']) * model.lon['t_lon'] * s
-    A[2, 0] = -model.lon['Cm']['u']
-    A[2, 1] = -model.lon['Cm']['alphadot'] * model.lon['t_lon'] * s - model.lon['Cm']['alpha']
-    A[2, 2] = model.lon['Iyb_nd'] * model.lon['t_lon']**2 * s**2 - model.lon['Cm']['q'] * model.lon['t_lon'] * s
+    A[0, 0] = 2 * plane.lon['mu_lon'] * plane.lon['t_lon'] * s - plane.lon['CX']['u']
+    A[0, 1] = -plane.lon['CX']['alpha']
+    A[0, 2] = -plane.FC['CZs']
+    A[1, 0] = -(plane.lon['CZ']['u'] + 2 * plane.FC['CZs'])
+    A[1, 1] = (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']) * plane.lon['t_lon'] * s - plane.lon['CZ']['alpha']
+    A[1, 2] = -(2 * plane.lon['mu_lon'] + plane.lon['CZ']['q']) * plane.lon['t_lon'] * s
+    A[2, 0] = -plane.lon['Cm']['u']
+    A[2, 1] = -plane.lon['Cm']['alphadot'] * plane.lon['t_lon'] * s - plane.lon['Cm']['alpha']
+    A[2, 2] = plane.lon['Iyb_nd'] * plane.lon['t_lon']**2 * s**2 - plane.lon['Cm']['q'] * plane.lon['t_lon'] * s
 
     #Control matrix -
     B = sp.zeros(3, 2)
-    B[0, 0] = model.lon['CX']['deltae']
-    B[0, 1] = model.lon['CX']['T']
-    B[1, 0] = model.lon['CZ']['deltae']
-    B[1, 1] = model.lon['CZ']['T']
-    B[2, 0] = model.lon['Cm']['deltae']
-    B[2, 1] = model.lon['Cm']['T']
+    B[0, 0] = plane.lon['CX']['deltae']
+    B[0, 1] = plane.lon['CX']['T']
+    B[1, 0] = plane.lon['CZ']['deltae']
+    B[1, 1] = plane.lon['CZ']['T']
+    B[2, 0] = plane.lon['Cm']['deltae']
+    B[2, 1] = plane.lon['Cm']['T']
 
     # - Characteristic equation -
     Det = sp.det(A)
@@ -55,9 +61,9 @@ def lon_dynamics(model):
 
         Num = Num * s
         # Pitch rate transfer function (qhat = Dtheta/Dt)
-        G[f'G{names[j + 1][i]}'] = utils.factorize_G(utils.syms2tf(Num / Det) * model.lon['t_lon'])
+        G[f'G{names[j + 1][i]}'] = utils.factorize_G(utils.syms2tf(Num / Det) * plane.lon['t_lon'])
 
-    return G
+    return G,A,B
 
 def lat_dynamics(plane):
     """
@@ -67,6 +73,8 @@ def lat_dynamics(plane):
 
     Returns:
         - G (dict): A dictionary containing the transfer functions for the lateral-directional dynamics of the plane. The keys of the dictionary are the names of the transfer functions, and the values are the corresponding transfer function objects.
+        - A (sympy matrix): The state matrix of the lateral-directional dynamics.
+        - B (sympy matrix): The control matrix of the lateral-directional dynamics.
     Note:
     - Assumes control by aileron deflection (deltaa) and rudder deflection (deltar).
     - The transfer functions are calculated based on the parameters of the plane.
@@ -78,28 +86,28 @@ def lat_dynamics(plane):
     s = sp.symbols('s')
     
     # - State matrix -
-    Alat = sp.zeros(3)
-    Alat[0, 0] = 2 * plane.lat['mu_lat'] * plane.lat['t_lat'] * s - plane.lat['CY']['beta']
-    Alat[0, 1] = plane.FC['CZs'] - plane.lat['CY']['p'] * plane.lat['t_lat'] * s
-    Alat[0, 2] = 2 * plane.lat['mu_lat'] - plane.lat['CY']['r']
-    Alat[1, 0] = -plane.lat['Cl']['beta']
-    Alat[1, 1] = plane.lat['Ixb_nd'] * plane.lat['t_lat']**2 * s**2 - plane.lat['Cl']['p'] * plane.lat['t_lat'] * s
-    Alat[1, 2] = -plane.lat['Ixzb_nd'] * plane.lat['t_lat'] * s - plane.lat['Cl']['r']
-    Alat[2, 0] = -plane.lat['Cn']['beta']
-    Alat[2, 1] = -plane.lat['Ixzb_nd'] * plane.lat['t_lat']**2 * s**2 - plane.lat['Cn']['p'] * plane.lat['t_lat'] * s
-    Alat[2, 2] = plane.lat['Izb_nd'] * plane.lat['t_lat'] * s - plane.lat['Cn']['r']
+    A = sp.zeros(3)
+    A[0, 0] = 2 * plane.lat['mu_lat'] * plane.lat['t_lat'] * s - plane.lat['CY']['beta']
+    A[0, 1] = plane.FC['CZs'] - plane.lat['CY']['p'] * plane.lat['t_lat'] * s
+    A[0, 2] = 2 * plane.lat['mu_lat'] - plane.lat['CY']['r']
+    A[1, 0] = -plane.lat['Cl']['beta']
+    A[1, 1] = plane.lat['Ixb_nd'] * plane.lat['t_lat']**2 * s**2 - plane.lat['Cl']['p'] * plane.lat['t_lat'] * s
+    A[1, 2] = -plane.lat['Ixzb_nd'] * plane.lat['t_lat'] * s - plane.lat['Cl']['r']
+    A[2, 0] = -plane.lat['Cn']['beta']
+    A[2, 1] = -plane.lat['Ixzb_nd'] * plane.lat['t_lat']**2 * s**2 - plane.lat['Cn']['p'] * plane.lat['t_lat'] * s
+    A[2, 2] = plane.lat['Izb_nd'] * plane.lat['t_lat'] * s - plane.lat['Cn']['r']
     
     # - Control matrix -
-    Blat = sp.zeros(3, 2)
-    Blat[0, 0] = plane.lat['CY']['deltaa']  # Generally, 0
-    Blat[0, 1] = plane.lat['CY']['deltar']
-    Blat[1, 0] = plane.lat['Cl']['deltaa']
-    Blat[1, 1] = plane.lat['Cl']['deltar']
-    Blat[2, 0] = plane.lat['Cn']['deltaa']
-    Blat[2, 1] = plane.lat['Cn']['deltar']
+    B = sp.zeros(3, 2)
+    B[0, 0] = plane.lat['CY']['deltaa']  # Generally, 0
+    B[0, 1] = plane.lat['CY']['deltar']
+    B[1, 0] = plane.lat['Cl']['deltaa']
+    B[1, 1] = plane.lat['Cl']['deltar']
+    B[2, 0] = plane.lat['Cn']['deltaa']
+    B[2, 1] = plane.lat['Cn']['deltar']
     
     # - Characteristic equation -
-    Det = sp.det(Alat, method='berkowitz')
+    Det = sp.det(A, method='berkowitz')
     
     # -- TRANSFER FUNCTIONS --
     names = [["betadeltaa", "betadeltar"], ["phideltaa", "phideltar"], ["rdeltaa", "rdeltar"], ["pdeltaa", "pdeltar"], ["psideltaa", "psideltar"]]
@@ -110,21 +118,23 @@ def lat_dynamics(plane):
     
     for i in range(u):
         for j in range(x - 2):
-            Asub = Alat.copy()
-            Asub[:, j] = Blat[:, i]
+            Asub = A.copy()
+            Asub[:, j] = B[:, i]
             Num[j, i] = sp.det(Asub, method='berkowitz')
             G[f'G{names[j][i]}'] = utils.factorize_G(utils.syms2tf(Num[j, i] / Det))
     
     # p transfer functions
     Num[2, 0] = Num[0, 0] * s * plane.lat['t_lat']
     Num[2, 1] = Num[0, 1] * s * plane.lat['t_lat']
+
     G[f'G{names[2][0]}'] = utils.factorize_G(utils.syms2tf(Num[2, 0] / Det))
     G[f'G{names[2][1]}'] = utils.factorize_G(utils.syms2tf(Num[2, 1] / Det))
     
     # Psi transfer functions
     Num[3, 0] = Num[1, 0] / s / plane.lat['t_lat']
     Num[3, 1] = Num[1, 1] / s / plane.lat['t_lat']
+
     G[f'G{names[3][0]}'] = utils.factorize_G(utils.syms2tf(Num[3, 0] / Det))
     G[f'G{names[3][1]}'] = utils.factorize_G(utils.syms2tf(Num[3, 1] / Det))
     
-    return G
+    return G,A,B
