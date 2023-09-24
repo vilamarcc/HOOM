@@ -152,10 +152,10 @@ class plane_model:
         
         # - Transfer functions -
         # Longitudinal
-        self.lon['G'] = lon_dynamics(self)
+        self.lon['G'],self.lon['A'],self.lon['B'] = lon_dynamics(self)
         
         # Lateral
-        self.lat['G'] = lat_dynamics(self)
+        self.lat['G'],self.lat['A'],self.lat['B'] = lat_dynamics(self)
 
     
     def set_FC(self,newFC):
