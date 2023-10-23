@@ -1,5 +1,5 @@
 import sympy as sp
-import utils.scales as utils
+import src.utils.scales as utils
 
 def lon_dynamics(plane):
     """
@@ -107,34 +107,34 @@ def lat_dynamics(plane):
     B[2, 1] = plane.lat['Cn']['deltar']
     
     # - Characteristic equation -
-    Det = sp.det(A, method='berkowitz')
+    Det = A.det()
     
     # -- TRANSFER FUNCTIONS --
     names = [["betadeltaa", "betadeltar"], ["phideltaa", "phideltar"], ["rdeltaa", "rdeltar"], ["pdeltaa", "pdeltar"], ["psideltaa", "psideltar"]]
     x, u = len(names), len(names[0])
     G = {}
     
-    Num = sp.zeros(x - 2, u)
+    Num = sp.zeros(x, u)
     
     for i in range(u):
         for j in range(x - 2):
             Asub = A.copy()
             Asub[:, j] = B[:, i]
-            Num[j, i] = sp.det(Asub, method='berkowitz')
+            Num[j, i] = Asub.det()
             G[f'G{names[j][i]}'] = utils.factorize_G(utils.syms2tf(Num[j, i] / Det))
     
     # p transfer functions
-    Num[2, 0] = Num[0, 0] * s * plane.lat['t_lat']
-    Num[2, 1] = Num[0, 1] * s * plane.lat['t_lat']
-
-    G[f'G{names[2][0]}'] = utils.factorize_G(utils.syms2tf(Num[2, 0] / Det))
-    G[f'G{names[2][1]}'] = utils.factorize_G(utils.syms2tf(Num[2, 1] / Det))
-    
-    # Psi transfer functions
-    Num[3, 0] = Num[1, 0] / s / plane.lat['t_lat']
-    Num[3, 1] = Num[1, 1] / s / plane.lat['t_lat']
+    Num[3, 0] = Num[1, 0] * s * plane.lat['t_lat']
+    Num[3, 1] = Num[1, 1] * s * plane.lat['t_lat']
 
     G[f'G{names[3][0]}'] = utils.factorize_G(utils.syms2tf(Num[3, 0] / Det))
     G[f'G{names[3][1]}'] = utils.factorize_G(utils.syms2tf(Num[3, 1] / Det))
+    
+    # Psi transfer functions
+    Num[4, 0] = Num[2, 0] / s / plane.lat['t_lat']
+    Num[4, 1] = Num[2, 1] / s / plane.lat['t_lat']
+
+    G[f'G{names[4][0]}'] = utils.factorize_G(utils.syms2tf(Num[4, 0] / Det))
+    G[f'G{names[4][1]}'] = utils.factorize_G(utils.syms2tf(Num[4, 1] / Det))
     
     return G,A,B

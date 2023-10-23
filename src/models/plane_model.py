@@ -1,8 +1,8 @@
 import math
 import numpy as np
-from utils.ISA import *
-from models.dynamics import lat_dynamics, lon_dynamics
-from utils.scales import *
+from src.utils.ISA import *
+from src.models.dynamics import lat_dynamics, lon_dynamics
+from src.utils.scales import *
 
 class plane_model:
 
@@ -95,7 +95,8 @@ class plane_model:
         self.Ixzb          = model.Ixzb
 
         # - Non dimensional properties -
-        self.lat,self.lon = {}
+        self.lat = {}
+        self.lon = {}
 
         self.lon['t_lon'] = scales['lon']['time']
         self.lat['t_lat'] = scales['lat']['time']
@@ -114,9 +115,9 @@ class plane_model:
         self.FC['Cms'] = 0
 
         # - Performance properties -
-        self.Vmax = model.Vmax
-        self.Vc = model.Vc
-        self.hmax = model.hmax
+        #self.Vmax = model.Vmax
+        #self.Vc = model.Vc
+        #self.hmax = model.hmax
 
         # - Flight derivatives. By default, dimensionless -
         # Store raw inputs
@@ -132,16 +133,23 @@ class plane_model:
         self.model['Cn'] = model.Cn
 
         # Longitudinal
-        self.lon['CX']['u'] = self.model['CT']['u']*np.cos(self.FC['epss']) - self.model['CD']['u']
-        self.lon['CX']['alpha'] = self.model['CT']['alpha']*np.cos(self.FC['epss']) + self.FC['CLs'] - self.model['CD']['alpha']
-        self.lon['CX']['delta'] = -self.model['CD']['delta']
-        self.lon['CX']['T'] = self.FC['CTs']*np.cos(self.FC['epss'])
-        self.lon['CZ']['u'] = -self.model['CT']['u']*np.sin(self.FC['epss']) - self.model['CL']['u']
-        self.lon['CZ']['alpha'] = -self.model['CT']['alpha']*np.sin(self.FC['epss']) -self.model['CL']['alpha'] - self.FC['CDs']
-        self.lon['CZ']['alphadot'] = -self.model['CL']['alpha']
-        self.lon['CZ']['q'] = -self.model['CL']['q']
-        self.lon['CZ']['delta'] = -self.model['CL']['delta']
-        self.lon['CZ']['T'] = -self.FC['CTs']*np.sin(self.FC['epss'])
+
+        self.lon['CX'] = {
+            'u': self.model['CT']['u']*np.cos(self.FC['epss']) - self.model['CD']['u'],
+            'alpha': self.model['CT']['alpha']*np.cos(self.FC['epss']) + self.FC['CLs'] - self.model['CD']['alpha'],
+            'deltae': -self.model['CD']['deltae'],
+            'T': self.FC['CTs']*np.cos(self.FC['epss'])
+        }
+        
+        self.lon['CZ'] = {
+            'u': -self.model['CT']['u']*np.sin(self.FC['epss']) - self.model['CL']['u'],
+            'alpha': -self.model['CT']['alpha']*np.sin(self.FC['epss']) -self.model['CL']['alpha'] - self.FC['CDs'],
+            'alphadot': -self.model['CL']['alpha'],
+            'q': -self.model['CL']['q'],
+            'deltae': -self.model['CL']['deltae'],
+            'T': -self.FC['CTs']*np.sin(self.FC['epss'])
+        }
+
         self.lon['Cm'] = self.model['Cm']
         self.lon['Cm']['u'] = self.model['Cm']['u'] + self.model['Cm']['Tu']
         
