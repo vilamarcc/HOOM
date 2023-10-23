@@ -1,4 +1,4 @@
-import utils.ISA
+from src.utils.ISA import ISA
 import sympy as sp
 import control as ctrl
 import numpy as np
@@ -44,7 +44,7 @@ def get_scales(plane):
                         - 'moment': The moment on the wing.
                         - 'inertia': The moment of inertia.
     """
-    _, _, rho = utils.ISA(plane.FC['hs'])  # Assuming Utils.ISA returns three values
+    _, _, rho = ISA(plane.FC['hs'])  # Assuming ISA returns three values
 
     scales = {}
 
@@ -87,9 +87,18 @@ def syms2tf(G):
         TF_from_sym (TransferFunction): The transfer function generated from the symbolic expression.
     """
     symNum, symDen = sp.fraction(G)  # Get num and den of Symbolic TF
-    num = sp.poly(symNum)            # Convert Symbolic num to polynomial
-    den = sp.poly(symDen)            # Convert Symbolic den to polynomial
-    TF_from_sym = ctrl.TransferFunction(num, den)
+    num = sp.poly(symNum).all_coeffs()   # Convert Symbolic num to polynomial
+    den = sp.poly(symDen).all_coeffs()    # Convert Symbolic den to polynomial
+
+    num_array = np.array(num, dtype=float)  # Convert num to numpy array
+    den_array = np.array(den, dtype=float)  # Convert den to numpy array
+    
+    if np.isnan(num_array).any() or np.isinf(num_array).any():
+        raise ValueError("numerator contains NaN or inf values")
+    if np.isnan(den_array).any() or np.isinf(den_array).any():
+        raise ValueError("denominator contains NaN or inf values")
+
+    TF_from_sym = ctrl.TransferFunction(num_array.tolist(), den_array.tolist())
 
     return TF_from_sym
 
@@ -104,8 +113,9 @@ def tf2syms(G):
         SymbolicExpression: The symbolic expression obtained from the transfer function.
     """
     s = sp.symbols('s')
-    num, den = ctrl.tfdata(G, 'v')
-    sym_from_TF = sp.poly(num, s) / sp.poly(den, s)
+    num, den = ctrl.tfdata(G)
+
+    sym_from_TF = sp.Poly.from_list(num[0][0], s) / sp.Poly.from_list(den[0][0], s)
 
     return sym_from_TF
 
@@ -187,7 +197,7 @@ def factorize_G(G):
             count += 2
 
     # -- Static gain -- (removing s associated with null zeros and poles)
-    K = sp.limit(ctrl.tf2sym(G)*s**null_p/s**null_z, s, 0)
+    K = sp.limit(tf2syms(G)*s**null_p/s**null_z, s, 0)
 
     Numfact = 1
     for tau in tau_z:
@@ -198,7 +208,7 @@ def factorize_G(G):
 
     # -- Transfer function --
     Gfact_sym = K*Numfact/Denfact
-    Gfact = ctrl.TransferFunction(Gfact_sym.as_numer_denom()[0], Gfact_sym.as_numer_denom()[1])
+    Gfact = syms2tf(Gfact_sym)
     K = float(K)
     
     G_f = {

@@ -1,4 +1,3 @@
-
 import numpy as np
 ## ---- Unit conversion ----
 
@@ -23,14 +22,14 @@ def kt_to_ms(kt_value):
 def rad_to_deg(rad_value):
     """ Converts from radians to degrees
     """
-    deg_value = rad_value * 180/np.pi
+    deg_value = rad_value*180.0/np.pi
     return deg_value
 
 def deg_to_rad(deg_value):
     """ Converts from radians to degrees
     """
-    rad_value = deg_value * np.pi/180
-    return
+    rad_value = deg_value*np.pi/180.0
+    return rad_value
 
 def lb_to_kg(lb_value):
     """ Converts from lbs to kgs
