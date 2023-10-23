@@ -1,4 +1,5 @@
-from utils.conversion import *
+from sympy import deg
+from src.utils.conversion import *
 import numpy as np
 
 # This file contais some useful examples of plane data used to run the library, more can be added by following the same class structure for future use
@@ -23,10 +24,18 @@ class GlobalHawk:
         self.Izb = 210513 # [kg*m^2]
         self.Ixzb = -1660 # [kg*m^2]
 
-        # -- Performances [float] -- 
-        self.Vmax = kmh_to_ms(800.0) # [m/s]
-        self.Vc = kmh_to_ms(650.0)   # [m/s]
-        self.hmax = m_to_ft(19812) # [ft]
+        # Flight condition [dict]
+        self.FC = {
+            'hs': ft_to_m(10000), # [m]
+            'us': kt_to_ms(320),  # [m/s]
+            'alphabs': deg_to_rad(0), # [rad]
+            'CLs': 0.154,
+            'CDs': 0.026,
+            'CTs': 0.026 / np.cos(0),  # CTxs = CDs
+            'Cms': 0, # Assumed 0
+            'CmTs': 0, # Assumed 0
+            'epss': deg_to_rad(0) # [rad]
+        }
 
         # Non-dimensional derivatives [dict]
         # Longitudinal
@@ -77,18 +86,6 @@ class GlobalHawk:
             'deltaa': -0.001,
             'deltar': 0.020
         }
-        
-        FC = {
-                'hs': ft_to_m(10000),
-                'us': kt_to_ms(320),
-                'alphabs': deg_to_rad(0),
-                'CLs': 0.154,
-                'CDs': 0.026,
-                'CTs': 0.026 / np.cos(deg_to_rad(0)),  # Assumed equal to CDs (alpha = 0)
-                'Cms': 0,  # Assumed 0
-                'CmTs': 0,  # Assumed 0
-                'epss': deg_to_rad(0)
-        }
 
 # -- Learjet 24 Characteristics & Stability derivatives --
 
@@ -116,15 +113,15 @@ class Learjet24:
 
         # Flight condition [dict]
         self.FC = {
-            'hs': ft_to_m(40000),
-            'us': ft_to_m(677),  # Speed given in ft/s
-            'alphabs': deg_to_rad(2.7),
+            'hs': ft_to_m(40000), # [m]
+            'us': ft_to_m(677),  # [m/s]
+            'alphabs': deg_to_rad(2.7), # [rad]
             'CLs': 0.410,
             'CDs': 0.0335,
-            'CTs': 0.0335 / np.cos(deg_to_rad(0)),  # CTxs = CDs
+            'CTs': 0.0335 / np.cos(0),  # CTxs = CDs
             'Cms': 0, # Assumed 0
             'CmTs': 0, # Assumed 0
-            'epss': deg_to_rad(0)
+            'epss': deg_to_rad(0) # [rad]
         }
 
         # Non-dimensional derivatives [dict]
