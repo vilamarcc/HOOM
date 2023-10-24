@@ -2,12 +2,12 @@ import unittest
 import math
 import numpy as np
 from src.models import plane_model as model
-from data import planeData
+from data import plane_data
 
 class Testplane(unittest.TestCase):
     def test_Kdim_values_longitudinal_globalhawk(self):
         # Create a GlobalHawk plane object
-        GH = planeData.GlobalHawk()
+        GH = plane_data.GlobalHawk()
 
         # Create a plane model object and load the plane data
         plane = model.plane_model()
@@ -41,7 +41,7 @@ class Testplane(unittest.TestCase):
 
     def test_Kdim_values_lateral_globalhawk(self):
         # Create a GlobalHawk plane object
-        GH = planeData.GlobalHawk()
+        GH = plane_data.GlobalHawk()
 
         # Create a plane model object and load the plane data
         plane = model.plane_model()
