@@ -12,7 +12,7 @@ def pade_TF(lag, order=1):
     pade_TF = ctrl.pade(base_TF, order)
     return pade_TF
 
-def forlag_TF(wb=10):
+def forlag_TF(wb=10.0):
     """
     Returns a first order lag transfer function.
     Used for actuator modelling.
@@ -22,7 +22,7 @@ def forlag_TF(wb=10):
     forlag_TF = 1 / (s / wb + 1)
     return forlag_TF
 
-def pid(kp=1, ki=1, kd=1, tau=1):
+def pid(kp=1.0, ki=1.0, kd=1.0, tau=1.0):
     """
     Returns a PID transfer function.
     Used for controller modelling.
@@ -32,8 +32,18 @@ def pid(kp=1, ki=1, kd=1, tau=1):
     pid_TF = kp * (1 + 1 / (tau * s) + tau * kd * s / (1 + tau * s / ki))
     return pid_TF
 
-def get_closed_loop_sys(plant, pid, sensor, actuator): # se tiene que mirar el output de esta función para ver si es correcto
+def getKdl(G):
     """
-    Returns the closed loop transfer function of a system given its plant, PID controller, sensor, and actuator.
+    Returns the direct link constant so that 1 degree of pilot stick
+    deflection produces a change of 1 degree in pitch angle.
     """
-    return ctrl.feedback(ctrl.series(ctrl.series(ctrl.series(plant, pid), sensor), actuator))
+    K_dl = 1 / G['K']
+    return K_dl
+
+def get_closed_loop_sys(plant, sensor, controller, actuator): # se tiene que mirar el output de esta función para ver si es correcto
+    """
+    Returns the closed loop transfer function of a system given its plant, controller, sensor and actuator.
+    """
+    G_closed_loop = (plant * pid * controller * actuator) / (1 + plant * sensor * controller * actuator)
+
+    return G_closed_loop
