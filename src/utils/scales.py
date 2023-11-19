@@ -228,3 +228,15 @@ def factorize_G(G):
     }
     
     return G_f
+
+def angle_normalize(angle):
+    """
+    Normalizes an angle to be between -pi and pi.
+    
+    Args:
+        angle (float): The angle to be normalized.
+        
+    Returns:
+        float: The normalized angle.
+    """
+    return ((angle + np.pi) % (2 * np.pi)) - np.pi
