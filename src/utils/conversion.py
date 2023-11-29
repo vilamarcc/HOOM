@@ -1,4 +1,7 @@
 import numpy as np
+from sympy import symbols, Matrix, inverse_laplace_transform
+from sympy.abc import s, t
+
 ## ---- Unit conversion ----
 
 def ft_to_m(ft_value):
@@ -54,3 +57,32 @@ def kmh_to_ms(kmh_value):
     """
     ms_value = kmh_value/3.6
     return ms_value
+
+
+## ---- Time conversion ----
+
+def matrix_inverse_laplace_transform(M):
+    """
+    This function performs the inverse Laplace transform on a matrix.
+
+    Parameters:
+    M (sympy.Matrix): A sympy Matrix object in the Laplace domain.
+
+    Returns:
+    sympy.Matrix: The input matrix transformed to the time domain using the inverse Laplace transform.
+    """
+    return Matrix(M.shape[0], M.shape[1], lambda i, j: inverse_laplace_transform(M[i, j], s, t))
+
+
+def to_time_domain(M):
+    """
+    This function converts a matrix from the Laplace domain to the time domain.
+
+    Parameters:
+    M (sympy.Matrix): A sympy Matrix object in the Laplace domain.
+
+    Returns:
+    sympy.Matrix: The input matrix converted to the time domain.
+    """
+    M_time = matrix_inverse_laplace_transform(M)
+    return M_time
