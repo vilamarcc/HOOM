@@ -1,5 +1,8 @@
 import sympy as sp
 import src.utils.scales as utils
+import control as ctrl
+import control.matlab as ctrlm
+import numpy as np
 
 def lon_dynamics(plane):
     """
@@ -9,7 +12,7 @@ def lon_dynamics(plane):
 
     Returns:
         - G (dict): A dictionary containing the transfer functions for the logitudinal dynamics of the plane. The keys of the dictionary are the names of the transfer functions, and the values are the corresponding transfer function objects.
-        - A (sympy matrix): The state matrix of the logitudinal dynamics.
+        - F (sympy matrix): The state matrix of the logitudinal dynamics.
         - B (sympy matrix): The control matrix of the logitudinal dynamics.
     Note:
     - Assumes control by elevator deflection (deltae) and thrust (deltaT).
@@ -63,7 +66,39 @@ def lon_dynamics(plane):
         # Pitch rate transfer function (qhat = Dtheta/Dt)
         G[f'G{names[j + 1][i]}'] = utils.factorize_G(utils.syms2tf(Num / Det) * plane.lon['t_lon'])
 
-    return G,A,B
+    
+    # -- STATE SPACE --
+    # - State matrix -
+    F = sp.zeros(4)
+    F[0, 0] = (plane.lon['CX']['u'] - 2 * plane.FC['CZs'] * np.tan(plane.FC['epss'])) / (2 * plane.lon['mu_lon'])
+    F[0, 1] = -plane.lon['CX']['alpha'] / (2 * plane.lon['mu_lon'])
+    F[0, 2] = 0
+    F[0, 3] = plane.FC['CZs'] / (2 * plane.lon['mu_lon'])
+    F[1, 0] = (plane.lon['CZ']['u'] + 2 * plane.FC['CZs']) / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot'])
+    F[1, 1] = plane.lon['CZ']['alpha'] / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot'])
+    F[1, 2] = (plane.lon['CZ']['q'] + 2 * plane.lon['mu_lon']) / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot'])
+    F[1, 3] = (plane.FC['CZs'] * np.tan(plane.FC['epss'])) / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot'])
+    F[2, 0] = plane.lon['Cm']['u'] / plane.lon['Iyb_nd'] + plane.lon['Cm']['alphadot'] * (plane.lon['CZ']['u'] + 2 * plane.FC['CZs']) / ((2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']))
+    F[2, 1] = plane.lon['Cm']['alpha'] / plane.lon['Iyb_nd'] + plane.lon['Cm']['alphadot'] * (plane.lon['CZ']['alpha'] / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']))
+    F[2, 2] = plane.lon['Cm']['q'] / plane.lon['Iyb_nd'] + plane.lon['Cm']['alphadot'] * (plane.lon['CZ']['q'] + 2 * plane.lon['mu_lon']) / ((2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']))
+    F[3, 0] = 0
+    F[3, 1] = 0
+    F[3, 2] = 1
+    F[3, 3] = 0
+
+    # - Control matrix -
+    B_t = sp.zeros(4, 2) 
+    B_t[0, 0] = plane.lon['CX']['deltae'] / (2 * plane.lon['mu_lon'])
+    B_t[0, 1] = plane.lon['CX']['T'] / (2 * plane.lon['mu_lon'])
+    B_t[1, 0] = plane.lon['CZ']['deltae'] / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot'])
+    B_t[1, 1] = plane.lon['CZ']['T'] / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot'])
+    B_t[2, 0] = plane.lon['Cm']['deltae'] / plane.lon['Iyb_nd'] + plane.lon['Cm']['alphadot'] * (plane.lon['CZ']['deltae'] / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']))
+    B_t[2, 1] = plane.lon['Cm']['T'] / plane.lon['Iyb_nd'] + plane.lon['Cm']['alphadot'] * (plane.lon['CZ']['T'] / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']))
+    B_t[3, 0] = 0
+    B_t[3, 1] = 0
+
+
+    return G, F, B_t
 
 def lat_dynamics(plane):
     """
