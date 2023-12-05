@@ -93,13 +93,14 @@ class ControlEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         if options is None:
-            x_max = np.array([10, 1, 1, 5], dtype=np.float32)
-            self.xs, self.us = [], []
+            x_max = np.array([1, 1, 1, 1], dtype=np.float32)
+            self.xs, self.us, self.ts = [], [], []
+            self.ts.append(0)
  
         return self._get_obs(), {}
     
     def _get_obs(self):
-        du, alpha, q, theta= self.state
+        du, alpha, q, theta = self.state
         return np.array([du, alpha, q, theta], dtype=np.float32)
 
     def render(self):
