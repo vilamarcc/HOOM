@@ -1,8 +1,6 @@
-import math
 import numpy as np
-from src.utils.ISA import *
 from src.models.dynamics import lat_dynamics, lon_dynamics
-from src.utils.scales import *
+from src.utils.scales import get_scales
 
 class plane_model:
 
@@ -160,10 +158,10 @@ class plane_model:
         
         # - Transfer functions -
         # Longitudinal
-        self.lon['G'],self.lon['A'],self.lon['B'] = lon_dynamics(self)
+        self.lon['G'], self.lon['A'], self.lon['B'] = lon_dynamics(self)
         
         # Lateral
-        self.lat['G'],self.lat['A'],self.lat['B'] = lat_dynamics(self)
+        self.lat['G'], self.lat['A'], self.lat['B'] = lat_dynamics(self)
 
     
     def set_FC(self,newFC):
