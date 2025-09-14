@@ -42,3 +42,9 @@ nodeLanguageServer/**
 nodeLanguageServer.*/**
 .vscode
 slycot
+*.zip
+*.npy
+*.eps
+*.svg
+*.pgf
+*.npz
