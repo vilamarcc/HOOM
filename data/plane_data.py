@@ -29,6 +29,8 @@ class GlobalHawk:
             'hs': ft_to_m(10000), # [m]
             'us': kt_to_ms(320),  # [m/s]
             'alphabs': deg_to_rad(0), # [rad]
+            'thetas': deg_to_rad(0), # [rad]
+            'gammas': deg_to_rad(0), # [rad]
             'CLs': 0.154,
             'CDs': 0.026,
             'CTs': 0.026 / np.cos(0),  # CTxs = CDs
@@ -116,6 +118,8 @@ class Learjet24:
             'hs': ft_to_m(40000), # [m]
             'us': ft_to_m(677),  # [m/s]
             'alphabs': deg_to_rad(2.7), # [rad]
+            'thetas': deg_to_rad(0), # [rad]
+            'gammas': deg_to_rad(0), # [rad]
             'CLs': 0.410,
             'CDs': 0.0335,
             'CTs': 0.0335 / np.cos(0),  # CTxs = CDs
@@ -183,3 +187,11 @@ class Learjet24:
             'deltaa': -0.020,
             'deltar': 0.074
         }
+
+class F18:
+    """
+    Contains geometric and mass properties, FC and stability derivatives
+    of a F18 airplane at cruise condition.
+    Extracted from ...
+    """
+    # TODO 
