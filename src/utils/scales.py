@@ -1,3 +1,4 @@
+from math import e
 from src.utils.ISA import ISA
 import sympy as sp
 import control as ctrl
@@ -229,14 +230,115 @@ def factorize_G(G):
     
     return G_f
 
-def angle_normalize(angle):
+def get_abs_error(x, ref_x):
     """
-    Normalizes an angle to be between -pi and pi.
+    Returns the absolute error between a state and a reference.
     
     Args:
-        angle (float): The angle to be normalized.
+        x (list, np.array or number): The state vector.
+        ref_x (list, np.array or number): The reference vector.
         
     Returns:
-        float: The normalized angle.
+        float: The absolute error between the state and the reference.
     """
-    return ((angle + np.pi) % (2 * np.pi)) - np.pi
+    return  abs(x - ref_x)
+
+def get_rel_error(x, ref_x):
+    """
+    Returns the relative error between a state and a reference.
+    
+    Args:
+        x (list, np.array or number): The state vector.
+        ref_x (list, np.array or number): The reference vector.
+        
+    Returns:
+        float: The relative error between the state and the reference.
+    """
+    epsilon = 1e-7  # small constant to avoid division by zero
+
+    return abs(x - ref_x) / abs(ref_x + epsilon)
+
+def get_settling_time(t, x, ref_x):
+    """
+    Returns the settling time of a system given its time, state and reference.
+    
+    Args:
+        t (list): The time vector.
+        x (list): The state vector.
+        ref_x (list): The reference vector.
+        
+    Returns:
+        float: The settling time of the system.
+    """
+    t = np.array(t)
+    x = np.array(x)
+    ref_x = np.array(ref_x)
+    
+    settling_time = t[np.where(np.abs(x-ref_x) < 0.02)[0][0]]
+    
+    return settling_time
+
+def normalize(x, x_min, x_max):
+    """
+    Normalizes a value between 0 and 1 given its minimum and maximum values.
+    
+    Args:
+        x (float): The value to be normalized.
+        x_min (float): The minimum value.
+        x_max (float): The maximum value.
+        
+    Returns:
+        float: The normalized value.
+    """
+    return (x - x_min) / (x_max - x_min)
+
+def denormalize(x_norm, x_min, x_max):
+    """
+    Denormalizes a value given its normalized value, minimum and maximum values.
+    
+    Args:
+        x_norm (float): The normalized value.
+        x_min (float): The minimum value.
+        x_max (float): The maximum value.
+        
+    Returns:
+        float: The denormalized value.
+    """
+    return x_norm * (x_max - x_min) + x_min
+
+def change_reference_rand(min_value, max_value):
+    return np.random.uniform(min_value, max_value)
+
+def change_reference_rand_interval(dt, min, max, tend, min_t, max_t): # TODO needs testing
+    # Initialize ref_x as an empty list
+    ref_x = []
+
+    # Calculate the number of steps
+    num_steps = int(tend / dt) + 1
+
+    # Generate a random interval between min*dt and max*dt
+    interval = np.random.uniform(min_t*dt, max_t*dt)
+
+    val = change_reference_rand(min, max)
+    ref_x.append(val)
+
+    # Generate ref_x
+    for i in range(num_steps):
+        # Check if the current time is a multiple of the interval
+        if i % interval < dt:
+            # Append a random value to ref_x
+            val = change_reference_rand(min, max)
+        ref_x.append(val)
+
+    # Convert ref_x to a numpy array
+    ref_x = np.array(ref_x)
+
+    return ref_x
+
+def mean_and_std(data):
+    mean = np.mean(data, axis=0)
+    std = np.std(data, axis=0)
+    return mean, std
+
+def normalize_data(data):
+    return (data - np.min(data)) / (np.max(data) - np.min(data))
