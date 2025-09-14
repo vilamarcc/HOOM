@@ -1,7 +1,5 @@
 import sympy as sp
 import src.utils.scales as utils
-import control as ctrl
-import control.matlab as ctrlm
 import numpy as np
 
 def lon_dynamics(plane):
@@ -51,7 +49,7 @@ def lon_dynamics(plane):
     Det = sp.det(A)
 
     # -- TRANSFER FUNCTIONS --
-    names = [["udeltae", "uT"], ["alphadeltae", "alphaT"], ["thetadeltae", "thetaT"], ["qdeltae", "qdeltaT"]]
+    names = [["udeltae", "uT"], ["alphadeltae", "alphaT"], ["thetadeltae", "thetaT"], ["qdeltae", "qT"]]
     x, u = len(names), len(names[0])
     G = {}
 
@@ -70,22 +68,23 @@ def lon_dynamics(plane):
     # -- STATE SPACE --
     # - State matrix -
     F = sp.zeros(4)
-    F[0, 0] = (plane.lon['CX']['u'] - 2 * plane.FC['CZs'] * np.tan(plane.FC['epss'])) / (2 * plane.lon['mu_lon'])
-    F[0, 1] = -plane.lon['CX']['alpha'] / (2 * plane.lon['mu_lon'])
+    F[0, 0] = (plane.lon['CX']['u'] - 2 * plane.FC['CZs'] * np.tan(plane.FC['thetas'])) / (2 * plane.lon['mu_lon'])
+    F[0, 1] = plane.lon['CX']['alpha'] / (2 * plane.lon['mu_lon'])
     F[0, 2] = 0
     F[0, 3] = plane.FC['CZs'] / (2 * plane.lon['mu_lon'])
     F[1, 0] = (plane.lon['CZ']['u'] + 2 * plane.FC['CZs']) / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot'])
     F[1, 1] = plane.lon['CZ']['alpha'] / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot'])
     F[1, 2] = (plane.lon['CZ']['q'] + 2 * plane.lon['mu_lon']) / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot'])
-    F[1, 3] = (plane.FC['CZs'] * np.tan(plane.FC['epss'])) / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot'])
-    F[2, 0] = plane.lon['Cm']['u'] / plane.lon['Iyb_nd'] + plane.lon['Cm']['alphadot'] * (plane.lon['CZ']['u'] + 2 * plane.FC['CZs']) / ((2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']))
-    F[2, 1] = plane.lon['Cm']['alpha'] / plane.lon['Iyb_nd'] + plane.lon['Cm']['alphadot'] * (plane.lon['CZ']['alpha'] / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']))
+    F[1, 3] = (plane.FC['CZs'] * np.tan(plane.FC['thetas'])) / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot'])
+    F[2, 0] = (plane.lon['Cm']['u'] / plane.lon['Iyb_nd']) + plane.lon['Cm']['alphadot'] * (plane.lon['CZ']['u'] + 2 * plane.FC['CZs']) / ((2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']))
+    F[2, 1] = (plane.lon['Cm']['alpha'] / plane.lon['Iyb_nd']) + plane.lon['Cm']['alphadot'] * (plane.lon['CZ']['alpha'] / (2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']))
     F[2, 2] = plane.lon['Cm']['q'] / plane.lon['Iyb_nd'] + plane.lon['Cm']['alphadot'] * (plane.lon['CZ']['q'] + 2 * plane.lon['mu_lon']) / ((2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']))
+    F[2, 3] = plane.lon['Cm']['alphadot'] * (plane.FC['CZs'] * np.tan(plane.FC['thetas'])) / ((2 * plane.lon['mu_lon'] - plane.lon['CZ']['alphadot']))
     F[3, 0] = 0
     F[3, 1] = 0
     F[3, 2] = 1
     F[3, 3] = 0
-
+    
     # - Control matrix -
     B_t = sp.zeros(4, 2) 
     B_t[0, 0] = plane.lon['CX']['deltae'] / (2 * plane.lon['mu_lon'])
@@ -171,5 +170,48 @@ def lat_dynamics(plane):
 
     G[f'G{names[4][0]}'] = utils.factorize_G(utils.syms2tf(Num[4, 0] / Det))
     G[f'G{names[4][1]}'] = utils.factorize_G(utils.syms2tf(Num[4, 1] / Det))
-    
-    return G,A,B
+
+
+    # -- STATE SPACE --
+    # - State matrix -
+    F = sp.zeros(5)
+    F[0, 0] = plane.lat['CY']['beta'] / (2 * plane.lat['mu_lat'])
+    F[0, 1] = plane.lon['CX']['alpha'] / (2 * plane.lat['mu_lat'])
+    F[0, 2] = - (2 * plane.lat['mu_lat'] - plane.lat['CY']['r']) / (2 * plane.lat['mu_lat'])
+    F[0, 3] = - plane.FC['CZs'] / (2 * plane.lat['mu_lat'])
+    F[0, 4] = 0
+    F[1, 0] = (plane.lat['Cl']['beta'] * plane.lat['Izb_nd'] + plane.lat['Cn']['beta'] * plane.lat['Ixzb_nd']) / (plane.lat['Ixb_nd'] * plane.lat['Izb_nd'] - plane.lat['Ixzb_nd'] ** 2)
+    F[1, 1] = (plane.lat['Cl']['p'] * plane.lat['Izb_nd'] + plane.lat['Cn']['p'] * plane.lat['Ixzb_nd']) / (plane.lat['Ixb_nd'] * plane.lat['Izb_nd'] - plane.lat['Ixzb_nd'] ** 2)
+    F[1, 2] = (plane.lat['Cl']['r'] * plane.lat['Izb_nd'] + plane.lat['Cn']['r'] * plane.lat['Ixzb_nd']) / (plane.lat['Ixb_nd'] * plane.lat['Izb_nd'] - plane.lat['Ixzb_nd'] ** 2)
+    F[1, 3] = 0
+    F[1, 4] = 0
+    F[2, 0] = (plane.lat['Cn']['beta'] * plane.lat['Ixb_nd'] + plane.lat['Cl']['beta'] * plane.lat['Ixzb_nd']) / (plane.lat['Ixb_nd'] * plane.lat['Izb_nd'] - plane.lat['Ixzb_nd'] ** 2)
+    F[2, 1] = (plane.lat['Cn']['p'] * plane.lat['Ixb_nd'] + plane.lat['Cl']['p'] * plane.lat['Ixzb_nd']) / (plane.lat['Ixb_nd'] * plane.lat['Izb_nd'] - plane.lat['Ixzb_nd'] ** 2)
+    F[2, 2] = (plane.lat['Cn']['r'] * plane.lat['Ixb_nd'] + plane.lat['Cl']['r'] * plane.lat['Ixzb_nd']) / (plane.lat['Ixb_nd'] * plane.lat['Izb_nd'] - plane.lat['Ixzb_nd'] ** 2)
+    F[2, 3] = 0
+    F[2, 4] = 0
+    F[3, 0] = 0
+    F[3, 1] = 1
+    F[3, 2] = np.tan(plane.FC['thetas'])
+    F[3, 3] = 0
+    F[3, 4] = 0
+    F[4, 0] = 0
+    F[4, 1] = 0
+    F[4, 2] = 1 / np.cos(plane.FC['thetas'])
+    F[4, 3] = 0
+    F[4, 4] = 0
+
+    # - Control matrix -
+    B_t = sp.zeros(5, 2)
+    B_t[0, 0] = 0
+    B_t[0, 1] = plane.lat['CY']['deltar'] / (2 * plane.lat['mu_lat'])
+    B_t[1, 0] = (plane.lat['Cl']['deltaa'] * plane.lat['Izb_nd'] + plane.lat['Cn']['deltaa'] * plane.lat['Ixzb_nd']) / (plane.lat['Ixb_nd'] * plane.lat['Izb_nd'] - plane.lat['Ixzb_nd'] ** 2)
+    B_t[1, 1] = (plane.lat['Cl']['deltar'] * plane.lat['Izb_nd'] + plane.lat['Cn']['deltar'] * plane.lat['Ixzb_nd']) / (plane.lat['Ixb_nd'] * plane.lat['Izb_nd'] - plane.lat['Ixzb_nd'] ** 2)
+    B_t[2, 0] = (plane.lat['Cn']['deltaa'] * plane.lat['Ixb_nd'] + plane.lat['Cl']['deltaa'] * plane.lat['Ixzb_nd']) / (plane.lat['Ixb_nd'] * plane.lat['Izb_nd'] - plane.lat['Ixzb_nd'] ** 2)
+    B_t[2, 1] = (plane.lat['Cn']['deltar'] * plane.lat['Ixb_nd'] + plane.lat['Cl']['deltar'] * plane.lat['Ixzb_nd']) / (plane.lat['Ixb_nd'] * plane.lat['Izb_nd'] - plane.lat['Ixzb_nd'] ** 2)
+    B_t[3, 0] = 0
+    B_t[3, 1] = 0
+    B_t[4, 0] = 0
+    B_t[4, 1] = 0
+
+    return G, F, B_t
